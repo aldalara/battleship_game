@@ -1,4 +1,5 @@
-flota = {'gozzila': 4,
+flota = {
+    'gozzila': 4,
     'grande2': 3,
     'grande1': 3,
     'mediano3': 2,

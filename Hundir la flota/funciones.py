@@ -3,6 +3,13 @@ import pprint
 import variables
 import time
 
+
+# CREA EL TABLERO 10x10
+def crear_tablero():
+  tablero = [["." for _ in range(10)] for _ in range(10)]
+  return tablero 
+
+
 # FUNCION QUE AÑADE LA FLOTA DE MANERA ALEATORIA
 def añadir_flota(tablero, largura):
     largura = largura
@@ -83,7 +90,7 @@ def tablero_flota():
     tablero = [["." for _ in range(10)] for _ in range(10)]
 
     for largura in variables.flota.values():
-        añadir_flota(tablero, largura)
+        tablero = añadir_flota(tablero, largura)
     
     return tablero
 
@@ -93,23 +100,23 @@ def disparar_barcos(tablero):
 
     fila = int(input("Introduce el número de la fila, un número del 0 al 9:"))
     columna = int(input("Introduce el número de la columna, un número del 0 al 9:"))
-    
-    
-   
+
     if 0 <= fila < 10 and 0 <= columna < 10:
 
         if tablero[fila][columna] == "b":
-            print("Le has dado!")
             tablero[fila][columna] = "X"
             resultado = True
         
+        elif tablero[fila][columna] == "X" or tablero[fila][columna] == "-":
+            print("Estas coordenadas ya las has introducido, vuelve a disparar:")
+            resultado = True
+        
         else:
-            print("Agua!")
             tablero[fila][columna] = "-"
             resultado = False
         
 
-    return tablero, resultado
+    return tablero, fila, columna, resultado
 
 
 # FUNCIÓN DISPARAR AUTOMÁTICO
@@ -123,16 +130,32 @@ def disparo_automatico(tablero):
         print("Te ha dado!")
         tablero[fila][columna] = "X"
         resultado = True
-                
+
+    elif tablero[fila][columna] == "X" or tablero[fila][columna] == "-":
+            print("Estas coordenadas ya las has introducido, vuelve a disparar:")
+            resultado = True
         
     else:
         print("Agua! Te has librado")
         tablero[fila][columna] = "-"
-        resultado = False
-            
-
+        resultado = False    
 
     return tablero, resultado
+
+
+# FUNCION ACTUALIZAR TABLERO PLAYBOARD
+def actualizar_tablero_playboard(tablero, play_board, fila, columna, resultado): #Actualiza el tablero del ordenador y me devuelve un tablero con el disparo hecho.
+    # Si fue un acierto ("X" por barco hundido)
+    if resultado: 
+        
+        play_board[fila][columna] = "X"  # Actualiza el tablero visible para el jugador
+        print("¡Le has dado a un barco!")
+    
+    else:
+        print("¡Agua! No has dado a ningún barco.")
+        play_board[fila][columna] = "-"  # Actualiza el tablero visible para el jugador
+    
+    return play_board
 
 
 # FUNCION CONTADOR    
@@ -149,9 +172,10 @@ def counter(tablero):
 
 # MAIN MENU
 def presenta_menu():# Sin parametros
-    opcion= input("¡Bienvenido a hundir la flota! ¿Qué quieres hacer?")
+    print("¡Bienvenido a hundir la flota! Pulsa 1 para JUGAR o 2 para SALIR")
     print(f"'1'- jugar")
     print(f"'2'- salir")
+    opcion= input("¿Qué quieres hacer?")
     
     while True:
 
@@ -173,38 +197,55 @@ def jugar():
 
     tablero_jugador = tablero_flota()
     tablero_computer = tablero_flota()
-    ciclos = 0
+    play_board = crear_tablero()
+    
+    x_computer = 0  
+    x_jugador = 0 
 
     while True:
-        #Primero dispara el usuario.
         
+        # Empieza mi turno
         while True:
-            tablero_computer, resultado = disparar_barcos(tablero_computer)
 
-            print('Tablero computer')
-            pprint.pprint(tablero_computer)
-            time.sleep(0.5)
+            print("Es tu turno de disparar.")
+            tablero_computer, fila, columna, resultado = disparar_barcos(tablero_computer)
+            play_board = actualizar_tablero_playboard(tablero_computer, play_board, fila, columna, resultado)
+            #print(f"Has disparado a la fila {fila}, columna {columna}")
+            
+            # Actualizamos mi contador de aciertos
             x_computer = counter(tablero_computer)
+            print("Tus disparos:")
+            pprint.pprint(play_board)
+            
+            if resultado == False:
+                break 
 
-            if x_computer >= 20:
+            # Verificamos que no he ganado
+            if x_computer >= 20: 
                 print("¡Has ganado!")
-                break  # Sale del bucle y termina el juego si ha ganado
+                break  # Sale del bucle y termina el juego si el jugador ha ganado
             else:
                 print(f"Te faltan {20 - x_computer} aciertos para ganar.")
-        
-        while True:
-            print("¡Su turno!")
-            tablero_jugador, resultado = disparo_automatico(tablero_jugador)
+                break
 
-            print('Tablero jugador')
-            pprint.pprint(tablero_jugador)
+        # Turno del computer
+        while True:
+            
+            print("¡Es el turno de tu oponente!")
+            tablero_jugador, resultado = disparo_automatico(tablero_jugador)
             time.sleep(0.5)
             x_jugador = counter(tablero_jugador)
+            print(f"Tu oponente te ha dado {x_jugador} golpes.")
+            print("Tu tablero:")
+            pprint.pprint(tablero_jugador)
+            
+            if resultado == False:
+                break 
 
             # Verificamos si la computadora ha ganado
             if x_jugador >= 20:
                 print("Has perdido, la computadora ha ganado.")
                 break
-            ciclos = ciclos + 1
-            print(ciclos)
+            #ciclos = ciclos + 1
+            #print(ciclos)
             time.sleep(0.5)
